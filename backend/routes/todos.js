@@ -8,7 +8,7 @@ router.post('/', async (req, res) => {
     try {
         const { description, completed } = req.body;
         const newTodo = await pool.query(
-            "INSERT INTO todos (description, completed) VALUES ($1, $2) RETURNING *",
+            "INSERT INTO todo (description, completed) VALUES ($1, $2) RETURNING *",
             [description, completed]
         );
         res.json(newTodo.rows[0]);
@@ -16,6 +16,48 @@ router.post('/', async (req, res) => {
         console.error(error.message);
         res.status(500).send("Server Error");
     }
+});
+
+// Get all todos
+router.get('/', async (req, res) => {
+    try {
+        const allTodos = await pool.query("SELECT * FROM todo");
+        res.json(allTodos.rows);
+    }catch (error) {
+        console.error(error.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Update a todo
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { description, completed } = req.body;
+        const updateTodo = await pool.query(
+            "UPDATE todo SET description = $1, completed = $2 WHERE todo_id = $3 RETURNING *",
+            [description, completed, id]
+        );
+        res.json({
+            message: "Todo was updated",
+            item: updateTodo.rows[0]
+        });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Delete a todo
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;  
+        await pool.query("DELETE FROM todo WHERE todo_id = $1", [id]);
+        res.json({ message: "Todo was deleted" });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Server Error");
+    }   
 });
 
 export default router;
